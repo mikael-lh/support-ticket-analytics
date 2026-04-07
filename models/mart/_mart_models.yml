@@ -8,9 +8,64 @@ models:
       Analysts can filter, group, and pivot without writing joins.
     columns:
       - name: ticket_id
+        description: Freshdesk ticket reference number
         tests:
           - unique
           - not_null
+      - name: created_at
+        description: When the ticket was raised
+      - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
+      - name: resolution_time_hours
+        description: Hours between ticket creation and resolution. NULL for unresolved tickets.
+      - name: subject
+        description: Ticket subject line
+      - name: status
+        description: Current ticket status
+      - name: priority
+        description: Ticket priority level
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: requester_type
+        description: investor, relationship_manager, or unknown — determined by email matching against platform tables
+      - name: investor_id
+        description: Unique investor identifier (UUID)
+      - name: investor_name
+        description: Full name of the investor
+      - name: investor_country
+        description: Country of residence
+      - name: rm_id
+        description: Unique RM identifier (UUID)
+      - name: rm_name
+        description: Full name of the RM
+      - name: partner_id
+        description: Unique partner identifier (UUID)
+      - name: partner_name
+        description: Full name of the partner organisation
+      - name: partner_type
+        description: Category of partner
+      - name: entity_id
+        description: Unique entity identifier (UUID)
+      - name: entity_name
+        description: Name of the investing entity
+      - name: entity_type
+        description: Legal structure type
+      - name: kyc_status
+        description: KYC approval status
+      - name: days_to_nearest_close
+        description: Days between ticket creation and nearest fund close
+      - name: nearest_close_id
+        description: The close_id of the nearest fund close
+      - name: nearest_close_status
+        description: Status of the nearest fund close
+      - name: nearest_fund_name
+        description: Name of the fund
+      - name: nearest_close_date
+        description: Scheduled date for this close
 
   - name: mart_investor_ticket_summary
     description: >
@@ -19,9 +74,22 @@ models:
       and what patterns exist?"
     columns:
       - name: investor_id
+        description: Unique investor identifier (UUID)
         tests:
           - unique
           - not_null
+      - name: full_name
+        description: Full name of the investor
+      - name: email
+        description: Lowercased registered email
+      - name: country
+        description: Country of residence
+      - name: partner_name
+        description: Full name of the partner organisation
+      - name: entity_type
+        description: Legal structure type
+      - name: kyc_status
+        description: KYC approval status
       - name: total_tickets
         description: Total tickets raised by this investor
       - name: open_tickets

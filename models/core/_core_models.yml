@@ -8,16 +8,29 @@ models:
       is accessed by joining through fct_tickets.
     columns:
       - name: investor_id
+        description: Unique investor identifier (UUID)
         tests:
           - unique
           - not_null
       - name: user_id
+        description: Platform login identifier (UUID)
         tests:
           - not_null
       - name: email
+        description: Lowercased registered email
         tests:
           - unique
           - not_null
+      - name: full_name
+        description: Full name of the investor
+      - name: entity_id
+        description: The investing entity this investor belongs to
+      - name: country
+        description: Country of residence
+      - name: created_at
+        description: Registration timestamp
+      - name: relationship_manager_id
+        description: RM responsible for this investor (null = self-managed, ~41% null)
 
   - name: dim_relationship_managers
     description: >
@@ -26,10 +39,16 @@ models:
       joining through fct_tickets.
     columns:
       - name: rm_id
+        description: Unique RM identifier (UUID)
         tests:
           - unique
           - not_null
+      - name: partner_id
+        description: The partner this RM belongs to
+      - name: name
+        description: Full name of the RM
       - name: email
+        description: Lowercased work email of the RM
         tests:
           - unique
           - not_null
@@ -40,13 +59,16 @@ models:
       fund managers, family offices).
     columns:
       - name: partner_id
+        description: Unique partner identifier (UUID)
         tests:
           - unique
           - not_null
       - name: partner_name
+        description: Full name of the partner organisation
         tests:
           - not_null
       - name: partner_type
+        description: Category of partner
         tests:
           - accepted_values:
               values: ['wealth_manager', 'fund_manager', 'family_office']
@@ -57,14 +79,21 @@ models:
       through which fund commitments are made.
     columns:
       - name: entity_id
+        description: Unique entity identifier (UUID)
         tests:
           - unique
           - not_null
+      - name: entity_name
+        description: Name of the investing entity
+      - name: partner_id
+        description: The partner this entity is associated with
       - name: entity_type
+        description: Legal structure type
         tests:
           - accepted_values:
               values: ['individual', 'corporate', 'trust', 'pension_fund']
       - name: kyc_status
+        description: KYC approval status
         tests:
           - accepted_values:
               values: ['approved', 'pending', 'expired', 'rejected']
@@ -77,21 +106,32 @@ models:
       Enriched with requester identity resolution and nearest fund close proximity.
     columns:
       - name: ticket_id
+        description: Freshdesk ticket reference number
         tests:
           - unique
           - not_null
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: subject
+        description: Ticket subject line
       - name: status
+        description: Current ticket status
         tests:
           - accepted_values:
               values: ['open', 'pending', 'resolved', 'closed']
       - name: priority
+        description: Ticket priority level
         tests:
           - accepted_values:
               values: ['low', 'medium', 'high', 'urgent']
       - name: created_at
+        description: When the ticket was raised
         tests:
           - not_null
       - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
         tests:
           - dbt_utils.expression_is_true:
               expression: ">= created_at"
@@ -101,12 +141,16 @@ models:
         description: >
           Derived field. Hours between ticket creation and resolution.
           NULL for unresolved tickets.
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
       - name: requester_type
+        description: investor, relationship_manager, or unknown — determined by email matching against platform tables
         tests:
           - not_null
           - accepted_values:
               values: ['investor', 'relationship_manager', 'unknown']
       - name: investor_id
+        description: Unique investor identifier (UUID). NULL if requester is not an investor.
         tests:
           - relationships:
               to: ref('dim_investors')
@@ -114,6 +158,7 @@ models:
               config:
                 where: "investor_id is not null"
       - name: rm_id
+        description: Unique RM identifier (UUID). NULL if requester is not an RM.
         tests:
           - relationships:
               to: ref('dim_relationship_managers')
@@ -121,6 +166,7 @@ models:
               config:
                 where: "rm_id is not null"
       - name: entity_id
+        description: The investing entity this ticket is associated with (UUID). Resolved via investor or RM.
         tests:
           - relationships:
               to: ref('dim_entities')
@@ -128,19 +174,25 @@ models:
               config:
                 where: "entity_id is not null"
       - name: partner_id
+        description: The partner this ticket is associated with (UUID). Resolved via investor or RM.
         tests:
           - relationships:
               to: ref('dim_partners')
               field: partner_id
               config:
                 where: "partner_id is not null"
+      - name: days_to_nearest_close
+        description: Days between ticket creation and nearest fund close. Positive if before close, negative if after.
       - name: nearest_close_id
+        description: The close_id of the nearest fund close for this ticket's partner
         tests:
           - relationships:
               to: ref('fct_fund_closes')
               field: close_id
               config:
                 where: "nearest_close_id is not null"
+      - name: nearest_close_status
+        description: Status of the nearest fund close
 
   - name: fct_fund_closes
     description: >
@@ -149,22 +201,33 @@ models:
       and partner.
     columns:
       - name: close_id
+        description: Unique close identifier (UUID)
         tests:
           - unique
           - not_null
       - name: fund_id
+        description: The fund this close belongs to (UUID)
         tests:
           - not_null
+      - name: fund_name
+        description: Name of the fund
       - name: partner_id
+        description: The partner whose investors are committing capital
         tests:
           - not_null
           - relationships:
               to: ref('dim_partners')
               field: partner_id
+      - name: close_number
+        description: Sequential close number within the fund
       - name: scheduled_close_date
+        description: Scheduled date for this close
         tests:
           - not_null
       - name: close_status
+        description: Current status of the close
         tests:
           - accepted_values:
               values: ['upcoming', 'completed', 'cancelled']
+      - name: total_committed_aum
+        description: Total capital committed for this close (GBP)

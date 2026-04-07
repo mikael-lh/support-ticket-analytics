@@ -7,9 +7,28 @@ models:
       Filters out @titanbay.com and @titanbay.co.uk domains (~100 tickets).
     columns:
       - name: ticket_id
+        description: Freshdesk ticket reference number
         tests:
           - unique
           - not_null
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: subject
+        description: Ticket subject line
+      - name: status
+        description: Current ticket status
+      - name: priority
+        description: Ticket priority level
+      - name: created_at
+        description: When the ticket was raised
+      - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
+      - name: partner_label
+        description: Manually entered partner label. Unreliable — often null, inconsistent casing and abbreviations. Not used for joining.
 
   - name: int_tickets_enriched
     description: >
@@ -18,9 +37,28 @@ models:
       partner_id and entity_id carried forward.
     columns:
       - name: ticket_id
+        description: Freshdesk ticket reference number
         tests:
           - unique
           - not_null
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: subject
+        description: Ticket subject line
+      - name: status
+        description: Current ticket status
+      - name: priority
+        description: Ticket priority level
+      - name: created_at
+        description: When the ticket was raised
+      - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
+      - name: partner_label
+        description: Manually entered partner label. Unreliable — often null, inconsistent casing and abbreviations. Not used for joining.
       - name: requester_type
         description: >
           Derived field. investor, relationship_manager, or unknown —
@@ -29,10 +67,16 @@ models:
           - not_null
           - accepted_values:
               values: ['investor', 'relationship_manager', 'unknown']
+      - name: investor_id
+        description: Unique investor identifier (UUID). NULL if requester is not an investor.
+      - name: rm_id
+        description: Unique RM identifier (UUID). NULL if requester is not an RM.
       - name: resolved_partner_id
         description: >
           Derived field. Partner resolved via investor->entity->partner
           or RM->partner. NULL for unknown requesters.
+      - name: entity_id
+        description: The investing entity this ticket is associated with (UUID). Resolved via investor.
 
   - name: int_tickets_with_close_proximity
     description: >
@@ -41,9 +85,38 @@ models:
       before the close, negative if after. NULL when no partner is resolved.
     columns:
       - name: ticket_id
+        description: Freshdesk ticket reference number
         tests:
           - unique
           - not_null
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: subject
+        description: Ticket subject line
+      - name: status
+        description: Current ticket status
+      - name: priority
+        description: Ticket priority level
+      - name: created_at
+        description: When the ticket was raised
+      - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
+      - name: partner_label
+        description: Manually entered partner label. Unreliable — often null, inconsistent casing and abbreviations. Not used for joining.
+      - name: requester_type
+        description: investor, relationship_manager, or unknown — determined by email matching against platform tables
+      - name: investor_id
+        description: Unique investor identifier (UUID). NULL if requester is not an investor.
+      - name: rm_id
+        description: Unique RM identifier (UUID). NULL if requester is not an RM.
+      - name: resolved_partner_id
+        description: Partner resolved via investor->entity->partner or RM->partner. NULL for unknown requesters.
+      - name: entity_id
+        description: The investing entity this ticket is associated with (UUID). Resolved via investor.
       - name: days_to_nearest_close
         description: Derived field. Days between ticket creation and nearest fund close.
       - name: nearest_close_id
