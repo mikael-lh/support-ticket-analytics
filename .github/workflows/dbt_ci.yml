@@ -40,11 +40,9 @@ jobs:
           EOF
 
       - name: Install dbt packages
-        working-directory: support_analytics
         run: dbt deps
 
       - name: Run dbt build (run + test)
-        working-directory: support_analytics
         run: dbt build
 
       - name: Upload dbt artifacts
@@ -53,6 +51,6 @@ jobs:
         with:
           name: dbt-artifacts
           path: |
-            support_analytics/target/manifest.json
-            support_analytics/target/run_results.json
+            target/manifest.json
+            target/run_results.json
           retention-days: 7
