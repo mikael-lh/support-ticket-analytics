@@ -1,0 +1,180 @@
+version: 2
+
+models:
+  - name: stg_freshdesk__tickets
+    description: >
+      Cleaned Freshdesk support tickets. Emails lowercased, strings trimmed,
+      tags split into an array. One row per ticket.
+    columns:
+      - name: ticket_id
+        description: Freshdesk ticket reference number
+        tests:
+          - unique
+          - not_null
+      - name: requester_email
+        description: Lowercased email of the person who raised the ticket
+        tests:
+          - not_null
+      - name: requester_name
+        description: Name of the person who raised the ticket
+      - name: subject
+        description: Ticket subject line
+      - name: status
+        description: Current ticket status
+        tests:
+          - accepted_values:
+              values: ['open', 'pending', 'resolved', 'closed']
+      - name: priority
+        description: Ticket priority level
+        tests:
+          - accepted_values:
+              values: ['low', 'medium', 'high', 'urgent']
+      - name: created_at
+        description: When the ticket was raised
+        tests:
+          - not_null
+      - name: resolved_at
+        description: When the ticket was resolved (null if unresolved)
+      - name: tags_array
+        description: Tags applied to the ticket, split into an array
+      - name: partner_label
+        description: >
+          Manually entered partner label. Unreliable — often null, inconsistent
+          casing and abbreviations. Not used for joining.
+
+  - name: stg_platform__partners
+    description: Partner organisations. One row per partner.
+    columns:
+      - name: partner_id
+        description: Unique partner identifier (UUID)
+        tests:
+          - unique
+          - not_null
+      - name: partner_name
+        description: Full name of the partner organisation
+        tests:
+          - not_null
+      - name: partner_type
+        description: Category of partner
+        tests:
+          - accepted_values:
+              values: ['wealth_manager', 'fund_manager', 'family_office']
+
+  - name: stg_platform__relationship_managers
+    description: Relationship managers employed by partner organisations. One row per RM.
+    columns:
+      - name: rm_id
+        description: Unique RM identifier (UUID)
+        tests:
+          - unique
+          - not_null
+      - name: partner_id
+        description: The partner this RM belongs to
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_platform__partners')
+              field: partner_id
+      - name: name
+        description: Full name of the RM
+      - name: email
+        description: Lowercased work email of the RM
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_platform__entities
+    description: Investing entities (legal structures for fund commitments). One row per entity.
+    columns:
+      - name: entity_id
+        description: Unique entity identifier (UUID)
+        tests:
+          - unique
+          - not_null
+      - name: entity_name
+        description: Name of the investing entity
+      - name: partner_id
+        description: The partner this entity is associated with
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_platform__partners')
+              field: partner_id
+      - name: entity_type
+        description: Legal structure type
+        tests:
+          - accepted_values:
+              values: ['individual', 'corporate', 'trust', 'pension_fund']
+      - name: kyc_status
+        description: KYC approval status
+        tests:
+          - accepted_values:
+              values: ['approved', 'pending', 'expired', 'rejected']
+
+  - name: stg_platform__investors
+    description: Investors registered on the platform. One row per investor.
+    columns:
+      - name: investor_id
+        description: Unique investor identifier (UUID)
+        tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: Platform login identifier (UUID)
+        tests:
+          - not_null
+      - name: email
+        description: Lowercased registered email
+        tests:
+          - unique
+          - not_null
+      - name: full_name
+        description: Full name of the investor
+      - name: entity_id
+        description: The investing entity this investor belongs to
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_platform__entities')
+              field: entity_id
+      - name: country
+        description: Country of residence
+      - name: created_at
+        description: Registration timestamp
+      - name: relationship_manager_id
+        description: RM responsible for this investor (null = self-managed, ~41% null)
+
+  - name: stg_platform__fund_closes
+    description: Fund closes — scheduled capital drawdown events. One row per close.
+    columns:
+      - name: close_id
+        description: Unique close identifier (UUID)
+        tests:
+          - unique
+          - not_null
+      - name: fund_id
+        description: The fund this close belongs to (UUID)
+        tests:
+          - not_null
+      - name: fund_name
+        description: Name of the fund
+      - name: partner_id
+        description: The partner whose investors are committing capital
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_platform__partners')
+              field: partner_id
+      - name: close_number
+        description: Sequential close number within the fund
+      - name: scheduled_close_date
+        description: Scheduled date for this close
+        tests:
+          - not_null
+      - name: close_status
+        description: Current status of the close
+        tests:
+          - accepted_values:
+              values: ['upcoming', 'completed', 'cancelled']
+      - name: total_committed_aum
+        description: Total capital committed for this close (GBP)

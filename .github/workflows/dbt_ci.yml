@@ -1,0 +1,58 @@
+name: dbt CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  dbt-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dbt-bigquery
+        run: pip install dbt-bigquery
+
+      - name: Configure dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          support_analytics:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: ${{ vars.BQ_PROJECT_ID }}
+                dataset: core
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          EOF
+
+      - name: Install dbt packages
+        working-directory: support_analytics
+        run: dbt deps
+
+      - name: Run dbt build (run + test)
+        working-directory: support_analytics
+        run: dbt build
+
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dbt-artifacts
+          path: |
+            support_analytics/target/manifest.json
+            support_analytics/target/run_results.json
+          retention-days: 7

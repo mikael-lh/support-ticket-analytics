@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: mart_ticket_overview
+    description: >
+      Denormalized One Big Table — every ticket with all dimension attributes
+      pre-joined (investor, RM, partner, entity, nearest fund close).
+      Analysts can filter, group, and pivot without writing joins.
+    columns:
+      - name: ticket_id
+        tests:
+          - unique
+          - not_null
+
+  - name: mart_investor_ticket_summary
+    description: >
+      One row per investor with aggregated ticket behaviour.
+      Directly answers: "Which investors raise the most tickets
+      and what patterns exist?"
+    columns:
+      - name: investor_id
+        tests:
+          - unique
+          - not_null
+      - name: total_tickets
+        description: Total tickets raised by this investor
+      - name: open_tickets
+        description: Currently open or pending tickets
+      - name: resolved_tickets
+        description: Resolved or closed tickets
+      - name: avg_resolution_hours
+        description: Average resolution time in hours
+      - name: first_ticket_date
+        description: Date of first ticket
+      - name: most_recent_ticket_date
+        description: Date of most recent ticket
+      - name: most_common_tag
+        description: Most frequently used tag across this investor's tickets

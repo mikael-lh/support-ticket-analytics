@@ -1,0 +1,20 @@
+select
+    ticket_id,
+    requester_email,
+    requester_name,
+    subject,
+    status,
+    priority,
+    created_at,
+    resolved_at,
+    tags_array,
+    timestamp_diff(resolved_at, created_at, hour) as resolution_time_hours,
+    requester_type,
+    investor_id,
+    rm_id,
+    entity_id,
+    resolved_partner_id as partner_id,
+    days_to_nearest_close,
+    nearest_close_id,
+    nearest_close_status
+from {{ ref('int_tickets_with_close_proximity') }}

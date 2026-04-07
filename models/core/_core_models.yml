@@ -1,0 +1,170 @@
+version: 2
+
+models:
+  - name: dim_investors
+    description: >
+      Investor dimension. One row per investor registered on the platform.
+      Contains only investor-owned attributes; entity and partner context
+      is accessed by joining through fct_tickets.
+    columns:
+      - name: investor_id
+        tests:
+          - unique
+          - not_null
+      - name: user_id
+        tests:
+          - not_null
+      - name: email
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_relationship_managers
+    description: >
+      Relationship manager dimension. One row per RM employed by a partner.
+      Contains only RM-owned attributes; partner context is accessed by
+      joining through fct_tickets.
+    columns:
+      - name: rm_id
+        tests:
+          - unique
+          - not_null
+      - name: email
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_partners
+    description: >
+      Partner dimension. One row per partner organisation (wealth managers,
+      fund managers, family offices).
+    columns:
+      - name: partner_id
+        tests:
+          - unique
+          - not_null
+      - name: partner_name
+        tests:
+          - not_null
+      - name: partner_type
+        tests:
+          - accepted_values:
+              values: ['wealth_manager', 'fund_manager', 'family_office']
+
+  - name: dim_entities
+    description: >
+      Entity dimension. One row per investing entity — the legal structure
+      through which fund commitments are made.
+    columns:
+      - name: entity_id
+        tests:
+          - unique
+          - not_null
+      - name: entity_type
+        tests:
+          - accepted_values:
+              values: ['individual', 'corporate', 'trust', 'pension_fund']
+      - name: kyc_status
+        tests:
+          - accepted_values:
+              values: ['approved', 'pending', 'expired', 'rejected']
+
+  - name: fct_tickets
+    description: >
+      Fact table for support tickets. One row per ticket (grain: ticket_id).
+      Carries all FK columns to dimension tables so analysts can join to
+      whichever dimension they need. Internal/test tickets are excluded.
+      Enriched with requester identity resolution and nearest fund close proximity.
+    columns:
+      - name: ticket_id
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['open', 'pending', 'resolved', 'closed']
+      - name: priority
+        tests:
+          - accepted_values:
+              values: ['low', 'medium', 'high', 'urgent']
+      - name: created_at
+        tests:
+          - not_null
+      - name: resolved_at
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "resolved_at >= created_at"
+              config:
+                where: "resolved_at is not null"
+      - name: resolution_time_hours
+        description: >
+          Derived field. Hours between ticket creation and resolution.
+          NULL for unresolved tickets.
+      - name: requester_type
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['investor', 'relationship_manager', 'unknown']
+      - name: investor_id
+        tests:
+          - relationships:
+              to: ref('dim_investors')
+              field: investor_id
+              config:
+                where: "investor_id is not null"
+      - name: rm_id
+        tests:
+          - relationships:
+              to: ref('dim_relationship_managers')
+              field: rm_id
+              config:
+                where: "rm_id is not null"
+      - name: entity_id
+        tests:
+          - relationships:
+              to: ref('dim_entities')
+              field: entity_id
+              config:
+                where: "entity_id is not null"
+      - name: partner_id
+        tests:
+          - relationships:
+              to: ref('dim_partners')
+              field: partner_id
+              config:
+                where: "partner_id is not null"
+      - name: nearest_close_id
+        tests:
+          - relationships:
+              to: ref('fct_fund_closes')
+              field: close_id
+              config:
+                where: "nearest_close_id is not null"
+
+  - name: fct_fund_closes
+    description: >
+      Fact table for fund closes. One row per close event (grain: close_id).
+      Each close represents a scheduled capital drawdown for a specific fund
+      and partner.
+    columns:
+      - name: close_id
+        tests:
+          - unique
+          - not_null
+      - name: fund_id
+        tests:
+          - not_null
+      - name: partner_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_partners')
+              field: partner_id
+      - name: scheduled_close_date
+        tests:
+          - not_null
+      - name: close_status
+        tests:
+          - accepted_values:
+              values: ['upcoming', 'completed', 'cancelled']

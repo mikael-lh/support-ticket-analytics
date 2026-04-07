@@ -1,0 +1,127 @@
+version: 2
+
+sources:
+  - name: freshdesk
+    description: Support tickets from Freshdesk ticketing system
+    schema: raw
+    tables:
+      - name: freshdesk_tickets
+        description: >
+          Support tickets raised via the platform by investors or their
+          relationship managers. Managed by the Investor Services team.
+        columns:
+          - name: ticket_id
+            description: Freshdesk ticket reference number
+          - name: requester_email
+            description: Email address of the person who raised the ticket
+          - name: requester_name
+            description: Name of the person who raised the ticket
+          - name: subject
+            description: The ticket subject line as entered by the requester
+          - name: status
+            description: "Current ticket status: open, pending, resolved, or closed"
+          - name: priority
+            description: "Ticket priority: low, medium, high, or urgent"
+          - name: created_at
+            description: When the ticket was raised
+          - name: resolved_at
+            description: When the ticket was resolved. Null for unresolved tickets.
+          - name: tags
+            description: Comma-separated tags applied to the ticket
+          - name: partner_label
+            description: >
+              A label indicating the partner associated with this ticket,
+              manually entered by the IS team. Unreliable — often null (~44%),
+              inconsistent casing, and uses abbreviations/variants.
+
+  - name: platform
+    description: Core platform data warehouse tables
+    schema: raw
+    tables:
+      - name: platform_partners
+        description: >
+          Partner organisations (wealth managers, fund managers, family offices)
+          that the platform works with to bring funds to market.
+        columns:
+          - name: partner_id
+            description: Unique identifier for the partner (UUID)
+          - name: partner_name
+            description: Full name of the partner organisation
+          - name: partner_type
+            description: "Category: wealth_manager, fund_manager, or family_office"
+
+      - name: platform_relationship_managers
+        description: >
+          Relationship managers employed by partner organisations who manage
+          the investment process on behalf of their clients.
+        columns:
+          - name: rm_id
+            description: Unique identifier for the relationship manager (UUID)
+          - name: partner_id
+            description: The partner organisation this RM belongs to (UUID)
+          - name: name
+            description: Full name of the relationship manager
+          - name: email
+            description: Work email address of the relationship manager
+
+      - name: platform_entities
+        description: >
+          Investing entities — the legal structures through which commitments
+          into funds are made (e.g. personal account, trust, corporate vehicle).
+        columns:
+          - name: entity_id
+            description: Unique identifier for the entity (UUID)
+          - name: entity_name
+            description: Name of the investing entity
+          - name: partner_id
+            description: The partner this entity is associated with (UUID)
+          - name: entity_type
+            description: "Legal structure: individual, corporate, trust, or pension_fund"
+          - name: kyc_status
+            description: "KYC approval status: approved, pending, expired, or rejected"
+
+      - name: platform_investors
+        description: >
+          Investors registered on the platform. Each investor belongs to one
+          investing entity. Some manage their own activity; others have an RM.
+        columns:
+          - name: investor_id
+            description: Unique identifier for the investor (UUID)
+          - name: user_id
+            description: The investor's platform login identifier (UUID)
+          - name: email
+            description: The investor's registered platform email address
+          - name: full_name
+            description: Full name of the investor
+          - name: entity_id
+            description: The investing entity this investor belongs to (UUID)
+          - name: country
+            description: Country of residence
+          - name: created_at
+            description: When the investor registered on the platform
+          - name: relationship_manager_id
+            description: >
+              The RM responsible for this investor's platform activity.
+              Null (~41%) indicates the investor manages their own activity.
+
+      - name: platform_fund_closes
+        description: >
+          Fund closes — scheduled points at which committed capital is drawn
+          down from investors. A fund typically has multiple closes.
+        columns:
+          - name: close_id
+            description: Unique identifier for this close (UUID)
+          - name: fund_id
+            description: The fund this close belongs to (UUID)
+          - name: fund_name
+            description: Name of the fund
+          - name: partner_id
+            description: The partner whose investors are committing capital (UUID)
+          - name: close_number
+            description: Sequential close number within the fund (1 = first close)
+          - name: scheduled_close_date
+            description: The date on which this close is scheduled to occur
+          - name: close_status
+            description: "Current status: upcoming, completed, or cancelled"
+          - name: total_committed_aum
+            description: Total capital committed for this close, in GBP
