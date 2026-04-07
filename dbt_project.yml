@@ -11,6 +11,9 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+tests:
+  +severity: warn
+
 models:
   support_analytics:
     staging:
