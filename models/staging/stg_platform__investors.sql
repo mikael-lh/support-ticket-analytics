@@ -9,6 +9,6 @@ select
     full_name,
     entity_id,
     country,
-    created_at,
+    cast(created_at as timestamp) as created_at,
     relationship_manager_id
 from source

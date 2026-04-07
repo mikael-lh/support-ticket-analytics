@@ -7,8 +7,8 @@ select
     fund_id,
     fund_name,
     partner_id,
-    close_number,
-    scheduled_close_date,
+    cast(close_number as int64) as close_number,
+    cast(scheduled_close_date as date) as scheduled_close_date,
     close_status,
-    total_committed_aum
+    cast(total_committed_aum as numeric) as total_committed_aum
 from source

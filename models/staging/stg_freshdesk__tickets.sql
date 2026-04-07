@@ -9,8 +9,8 @@ select
     subject,
     status,
     priority,
-    created_at,
-    resolved_at,
+    cast(created_at as timestamp) as created_at,
+    cast(resolved_at as timestamp) as resolved_at,
     split(tags, ',') as tags_array,
     partner_label
 from source
