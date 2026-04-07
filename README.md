@@ -72,23 +72,23 @@ dataset      (views)              (views)                  + facts (tables)  tab
 **Core layer** — star schema with all FKs on the fact table:
 
 ```
- dim_investors       dim_relationship_managers       dim_entities       dim_partners    dim_partners
- ─────────────       ─────────────────────────       ────────────       ────────────    ────────────
- investor_id (PK)    rm_id (PK)                      entity_id (PK)     partner_id (PK)  partner_id (PK)
- full_name           name                            entity_name        partner_name     partner_name
- email               email                           entity_type        partner_type     partner_type
+ dim_investors       dim_relationship_managers       dim_entities       dim_partners   
+ ─────────────       ─────────────────────────       ────────────       ────────────    
+ investor_id (PK)    rm_id (PK)                      entity_id (PK)     partner_id (PK)  
+ full_name           name                            entity_name        partner_name     
+ email               email                           entity_type        partner_type     
  country                                             kyc_status                                 
- created_at                                                                                     │
-       │                    │                                                 │                 │
-       └────────────────────┼─────────────────────────────────────────────────┘                 │
-                            │                                                                   │
-                   ┌────────┴──────────┐          ┌───────────────────┐                         │
-                   │   fct_tickets     │          │  fct_fund_closes  │                         │
-                   │──────────────────-│          │───────────────────│                         │
-                   │ ticket_id (PK)    │          │ close_id (PK)     │                         │
-                   │ investor_id (FK)  │          │ fund_id           │                         │
-                   │ rm_id (FK)        │          │ fund_name         │                         │
-                   │ entity_id (FK)    │          │ partner_id (FK)   │─────────────────────────┘
+ created_at                                                                       
+       │                    │                             │                 │  │
+       └────────────────────┼─────────────────────────────┘─────────────────┘  │
+                            │                                                  │
+                   ┌────────┴──────────┐          ┌───────────────────┐        │
+                   │   fct_tickets     │          │  fct_fund_closes  │        │
+                   │──────────────────-│          │───────────────────│        │
+                   │ ticket_id (PK)    │          │ close_id (PK)     │        │
+                   │ investor_id (FK)  │          │ fund_id           │        │
+                   │ rm_id (FK)        │          │ fund_name         │        │
+                   │ entity_id (FK)    │          │ partner_id (FK)   │────────┘
                    │ partner_id (FK)   │          │ scheduled_close   │
                    │ nearest_close     │          | close_status      │
                    │ requester_type    │          │ committed_aum     │
