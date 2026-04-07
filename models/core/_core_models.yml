@@ -94,7 +94,7 @@ models:
       - name: resolved_at
         tests:
           - dbt_utils.expression_is_true:
-              expression: "resolved_at >= created_at"
+              expression: ">= created_at"
               config:
                 where: "resolved_at is not null"
       - name: resolution_time_hours
